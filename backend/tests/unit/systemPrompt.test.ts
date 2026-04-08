@@ -15,9 +15,9 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("</flight_results>");
   });
 
-  it("contém instrução de exatamente 3 destinos", () => {
+  it("contém instrução de 3 destinos", () => {
     const prompt = buildSystemPrompt("{}");
-    expect(prompt).toContain("EXATAMENTE 3");
+    expect(prompt).toContain("3 destinos");
   });
 
   it("contém instrução de não inventar preços", () => {

@@ -105,11 +105,44 @@ export async function searchRoutes(app: FastifyInstance) {
         const rawText =
           response.content.find((b) => b.type === "text")?.text ?? "";
         const parsed = parseFlightResults(rawText);
+        const options = parsed.options as unknown as FlightOption[];
+
+        // 6. Tratamento de erro baseado no que o agente retornou
+        const retryCount = messages.filter(
+          (m) => m.role === "user" && typeof m.content === "string" && m.content.startsWith("[SISTEMA]")
+        ).length;
+
+        // Nenhuma opção encontrada — pede alternativas (máx 1 retry)
+        if (options.length === 0 && retryCount === 0) {
+          messages.push({
+            role: "assistant",
+            content: response.content as LLMContentBlock[],
+          });
+          messages.push({
+            role: "user",
+            content: `[SISTEMA] Não foram encontrados voos para os destinos escolhidos. Tente 3 destinos alternativos diferentes, preferencialmente mais próximos da origem ou com mais opções de voo. Busque novamente e explique no campo message o que aconteceu e o que você está sugerindo.`,
+          });
+          continue;
+        }
+
+        // Todas as opções acima do budget — pede destinos mais baratos (máx 1 retry)
+        const allOverBudget = options.length > 0 && options.every((o) => !o.withinBudget);
+        if (allOverBudget && retryCount === 0) {
+          messages.push({
+            role: "assistant",
+            content: response.content as LLMContentBlock[],
+          });
+          messages.push({
+            role: "user",
+            content: `[SISTEMA] Todas as opções encontradas estão acima do orçamento de R$ ${body.budget.total}. Tente destinos mais baratos ou domésticos mais próximos. Busque novamente e no campo message explique a situação e o que está sugerindo como alternativa.`,
+          });
+          continue;
+        }
 
         const passengersParam = buildPassengersParam(body.passengers);
 
         const result: SearchResponse = {
-          options: (parsed.options as unknown as FlightOption[]).map((o) => ({
+          options: options.map((o) => ({
             ...o,
             bookingUrl: buildBookingUrl(from, o, passengersParam),
           })),
