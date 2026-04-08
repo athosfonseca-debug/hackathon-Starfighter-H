@@ -1,6 +1,18 @@
 import type { FlightOption, Passenger, ResolvedDates } from "../types";
 import { buildPassengersParam } from "./passengers";
 
+function buildBookingUrl(input: SearchFlightsInput, departure: string, arrival: string): string {
+  const params = new URLSearchParams({
+    origin:      input.from,
+    destination: input.to,
+    passengers:  buildPassengersParam(input.passengers),
+    departure,
+    arrival,
+    type:        "user",
+  });
+  return `https://app.onhappy.com.br/flight-search?${params.toString()}`;
+}
+
 const BASE_URL = "https://api.onhappy.com.br/api/flight/search";
 
 export interface SearchFlightsInput {
@@ -135,8 +147,9 @@ export function parseResponse(
         baggageCarryOn: hasCarryOn,
         recommended: false,
         withinBudget: false, // preenchido no executor
-        outbound: parseFlightLeg(out, input.dates.departure),
-        inbound: parseFlightLeg(inb, input.dates.return),
+        outbound:   parseFlightLeg(out, input.dates.departure),
+        inbound:    parseFlightLeg(inb, input.dates.return),
+        bookingUrl: buildBookingUrl(input, input.dates.departure, input.dates.return),
       });
     }
   }
@@ -241,6 +254,7 @@ function getMockResults(input: SearchFlightsInput): SearchFlightsOutput {
         durationMin: dest.durationMin,
         date: input.dates.return,
       },
+      bookingUrl: buildBookingUrl(input, input.dates.departure, input.dates.return),
     };
   });
 

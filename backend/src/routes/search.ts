@@ -4,8 +4,9 @@ import { buildSystemPrompt } from "../agents/systemPrompt";
 import { TOOLS } from "../agents/tools";
 import { executeToolCall, setExecutorContext } from "../agents/executor";
 import { resolveDates } from "../services/dateResolver";
-import { countByType } from "../services/passengers";
-import type { SearchRequest, SearchResponse } from "../types";
+import { countByType, buildPassengersParam } from "../services/passengers";
+import { resolveOriginIATA } from "../services/airports";
+import type { SearchRequest, SearchResponse, FlightOption, ResolvedDates } from "../types";
 import type { LLMMessage, LLMContentBlock } from "../lib/llm/types";
 
 export async function searchRoutes(app: FastifyInstance) {
@@ -34,12 +35,13 @@ export async function searchRoutes(app: FastifyInstance) {
       // 1. Resolve datas
       const resolvedDates = await resolveDates(body.dates);
 
-      // 2. Monta contexto para o executor e o system prompt
+      // 2. Resolve IATA de origem e monta contexto
       const pax = countByType(body.passengers);
+      const from = body.origin.iata ?? await resolveOriginIATA(body.origin.raw);
       setExecutorContext({
         passengers: body.passengers,
         dates: resolvedDates,
-        from: body.origin.iata ?? "GRU",
+        from,
         budget: body.budget.total,
       });
 
@@ -104,8 +106,13 @@ export async function searchRoutes(app: FastifyInstance) {
           response.content.find((b) => b.type === "text")?.text ?? "";
         const parsed = parseFlightResults(rawText);
 
+        const passengersParam = buildPassengersParam(body.passengers);
+
         const result: SearchResponse = {
-          options: parsed.options,
+          options: (parsed.options as unknown as FlightOption[]).map((o) => ({
+            ...o,
+            bookingUrl: buildBookingUrl(from, o, passengersParam),
+          })),
           message: parsed.message,
           resolvedDates,
           meta: {
@@ -143,6 +150,23 @@ function slimToolResult(raw: unknown): unknown {
   };
 }
 
+// ── Monta URL de reserva da OnHappy ────────────────────────────
+function buildBookingUrl(
+  origin: string,
+  option: FlightOption,
+  passengers: string
+): string {
+  const params = new URLSearchParams({
+    origin,
+    destination: option.destinationIATA,
+    passengers,
+    departure:   option.outbound.date,
+    arrival:     option.inbound.date,
+    type:        "user",
+  });
+  return `https://app.onhappy.com.br/flight-search?${params.toString()}`;
+}
+
 // ── Parser do formato <flight_results>...</flight_results> ──────
 export function parseFlightResults(raw: string): {
   options: SearchRequest[];
@@ -173,8 +197,6 @@ export function parseFlightResults(raw: string): {
     return { options: [], message: "Erro ao processar resultados." };
   }
 }
-
-import type { ResolvedDates } from "../types";
 
 function buildInitialMessage(
   req: SearchRequest,

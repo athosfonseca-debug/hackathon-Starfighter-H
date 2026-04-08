@@ -48,6 +48,7 @@ export interface FlightOption {
   withinBudget: boolean;
   outbound: FlightLeg;
   inbound: FlightLeg;
+  bookingUrl: string;
 }
 
 export interface FlightLeg {
