@@ -145,6 +145,13 @@ async function createQuote(
   return json;
 }
 
+function invalidateTokenCache(): void {
+  console.log("[toguro] invalidando cache de tokens");
+  _cachedOnflyToken = null;
+  _cachedToguroToken = null;
+  _tokenFetchPromise = null;
+}
+
 // ── Main entry point ────────────────────────────────────────────
 export async function searchFlights(
   input: SearchFlightsInput
@@ -155,7 +162,20 @@ export async function searchFlights(
     raw = await createQuote(toguroToken, input);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Falha ao buscar voos para ${input.to}: ${message}`);
+    // Token expirado: invalida cache e tenta uma vez mais
+    if (message.includes("401") || message.includes("token_expired")) {
+      console.log(`[toguro] token expirado para ${input.to}, reautenticando...`);
+      invalidateTokenCache();
+      try {
+        const { toguro: freshToken } = await getTokens();
+        raw = await createQuote(freshToken, input);
+      } catch (retryErr: unknown) {
+        const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+        throw new Error(`Falha ao buscar voos para ${input.to} (após retry): ${retryMsg}`);
+      }
+    } else {
+      throw new Error(`Falha ao buscar voos para ${input.to}: ${message}`);
+    }
   }
 
   return parseResponse(raw, input);
