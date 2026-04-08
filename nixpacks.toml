@@ -1,0 +1,4 @@
+[variables]
+NIXPACKS_INSTALL_CMD = "cd backend && npm install"
+NIXPACKS_BUILD_CMD = "cd backend && npm run build"
+NIXPACKS_START_CMD = "cd backend && node dist/server.js"
