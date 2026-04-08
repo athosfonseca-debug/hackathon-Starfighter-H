@@ -94,6 +94,7 @@ export async function searchRoutes(app: FastifyInstance) {
             })
           );
 
+
           messages.push({
             role: "user",
             content: results as LLMContentBlock[],
@@ -150,7 +151,6 @@ export async function searchRoutes(app: FastifyInstance) {
           resolvedDates,
           meta: {
             llmProvider: llm.name,
-            mockMode: !process.env.ONHAPPY_API_TOKEN,
             durationMs: Date.now() - start,
           },
         };
@@ -169,7 +169,6 @@ function slimToolResult(raw: unknown): unknown {
 
   const options = Array.isArray(r.options) ? r.options : [];
   return {
-    mockMode: r.mockMode,
     options: (options as Record<string, unknown>[]).slice(0, 3).map((o) => ({
       id: o.id,
       fareFamily: o.fareFamily,

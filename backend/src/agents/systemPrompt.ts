@@ -26,7 +26,7 @@ Exemplos de mapeamento (não limitado a estes):
 
 ## PASSO 2 — Busca de voos
 
-Chame search_flights_onhappy para cada um dos 3 destinos escolhidos. NUNCA invente preços.
+Chame search_flights_toguro para cada um dos 3 destinos escolhidos. NUNCA invente preços.
 
 ## PASSO 3 — Resposta
 

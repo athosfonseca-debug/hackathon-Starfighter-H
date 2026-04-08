@@ -65,7 +65,6 @@ export interface SearchResponse {
   resolvedDates: ResolvedDates;
   meta: {
     llmProvider: string;
-    mockMode: boolean;
     durationMs: number;
   };
 }

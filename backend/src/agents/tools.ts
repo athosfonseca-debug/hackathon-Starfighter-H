@@ -2,8 +2,8 @@ import type { LLMTool } from "../lib/llm/types";
 
 export const TOOLS: LLMTool[] = [
   {
-    name: "search_flights_onhappy",
-    description: `Busca passagens aéreas reais via API OnHappy.
+    name: "search_flights_toguro",
+    description: `Busca passagens aéreas reais via API Toguro (Onfly).
 Chame para CADA um dos 3 destinos candidatos.
 Retorna preços reais, horários, tarifas (LIGHT/CLASSIC/FLEX) e bagagem.
 NUNCA invente preços — sempre use esta tool.`,

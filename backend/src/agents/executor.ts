@@ -1,4 +1,4 @@
-import { searchFlights } from "../services/onhappy";
+import { searchFlights } from "../services/toguro";
 import type { Passenger, ResolvedDates } from "../types";
 
 interface ExecutorContext {
@@ -24,16 +24,21 @@ export async function executeToolCall(
     );
 
   switch (name) {
-    case "search_flights_onhappy": {
+    case "search_flights_toguro": {
       try {
-        const result = await searchFlights({
+        const searchInput = {
           passengers: _ctx.passengers,
           dates: _ctx.dates,
           from: _ctx.from,
           to: String(input.to),
           destinationName: String(input.destinationName ?? ""),
           destinationFlag: String(input.destinationFlag ?? "✈️"),
-        });
+        };
+        console.log("[toguro] search_flights_toguro →", JSON.stringify(searchInput));
+
+        const result = await searchFlights(searchInput);
+
+        console.log(`[toguro] ← ${result.options.length} opções para ${input.to} (total: ${result.totalResults})`);
 
         // Calcula withinBudget para cada opção
         result.options = result.options.map((o) => ({
@@ -44,7 +49,8 @@ export async function executeToolCall(
         return result;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        return { error: msg, options: [], totalResults: 0, mockMode: false };
+        console.error(`[toguro] ERRO search_flights_toguro (${input.to}):`, msg);
+        return { error: msg, options: [], totalResults: 0 };
       }
     }
 
