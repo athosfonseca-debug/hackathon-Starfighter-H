@@ -1,0 +1,26 @@
+{
+  "name": "vacation-concierge-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev":        "tsx watch src/server.ts",
+    "build":      "tsc",
+    "start":      "node dist/server.js",
+    "test":       "vitest run",
+    "test:watch": "vitest",
+    "test:ui":    "vitest --ui"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk":     "^0.27.0",
+    "@fastify/cors":         "^9.0.0",
+    "@google/generative-ai": "^0.21.0",
+    "dotenv":                "^16.4.0",
+    "fastify":               "^4.28.0"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^2.0.0",
+    "tsx":        "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest":     "^2.0.0"
+  }
+}
